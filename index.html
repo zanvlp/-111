@@ -1,44 +1,96 @@
-<!DOCTYPE html>
-<html lang="zh-CN">
+<!doctype html>
+<html lang="en">
 <head>
-<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Loading…</title>
-<style>
-html,body{margin:0;height:100%;overflow:hidden;background:#fff}
-#loading{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-family:sans-serif;opacity:.7}
-iframe{border:0;width:100%;height:100%;display:none}
-.err{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-family:sans-serif;color:#b91c1c}
-</style>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Loading...</title>
+  <style>
+    html, body {
+      margin:0; padding:0; height:100%;
+      overflow:hidden; background:#000; color:#fff;
+    }
+    #loading {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      text-align: center;
+      font-family: Arial, sans-serif;
+    }
+    .spinner {
+      margin: 0 auto 10px;
+      width: 40px;
+      height: 40px;
+      border: 4px solid rgba(255, 255, 255, 0.3);
+      border-top: 4px solid #fff;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    iframe {
+      width:100%;
+      height:100%;
+      border:none;
+      display:none; /* hidden until loaded */
+    }
+  </style>
 </head>
 <body>
-<div id="loading">Loading…</div>
-<div id="err" class="err" style="display:none"></div>
-<iframe id="frame"></iframe>
-<script>
-const usp = new URLSearchParams(location.search);
-const code = usp.get('c') || usp.get('u') || usp.get('key') || usp.get('url');
-if(!code){
-  document.getElementById('loading').style.display='none';
-  document.getElementById('err').textContent='缺少参数';
-  document.getElementById('err').style.display='block';
-} else {
-  const api = 'https://zan88.vip/api.php?action=resolve&c=' + encodeURIComponent(code);
-  fetch(api).then(r=>r.json()).then(d=>{
-    if(d.ok){
-      const fr = document.getElementById('frame');
-      fr.src = d.url;
-      fr.onload = ()=>{ document.getElementById('loading').style.display='none'; fr.style.display='block'; };
-    }else{
-      document.getElementById('loading').style.display='none';
-      document.getElementById('err').textContent = d.msg || '链接无效';
-      document.getElementById('err').style.display='block';
+  <div id="loading">
+    <div class="spinner"></div>
+    <div>Loading...</div>
+  </div>
+  <iframe id="targetFrame" src=""></iframe>
+
+  <script>
+    // Generate random string
+    function randomString(len = 8) {
+      return Math.random().toString(36).substr(2, len);
     }
-  }).catch(e=>{
-    document.getElementById('loading').style.display='none';
-    document.getElementById('err').textContent='网络错误';
-    document.getElementById('err').style.display='block';
-  });
-}
-</script>
+
+    // Ensure random param ?r= exists
+    (function ensureRandomParam() {
+      const url = new URL(location.href);
+      if (!url.searchParams.get("r")) {
+        url.searchParams.set("r", randomString());
+        location.replace(url.toString());
+      }
+    })();
+
+    function b64urlToStr(input) {
+      input = input.replace(/-/g, '+').replace(/_/g, '/');
+      const pad = input.length % 4;
+      if (pad) input += '='.repeat(4 - pad);
+      try {
+        return decodeURIComponent(escape(atob(input)));
+      } catch(e) {
+        try { return atob(input); } catch(e2) { return ''; }
+      }
+    }
+
+    function getParam(name) {
+      const url = new URL(location.href);
+      return url.searchParams.get(name);
+    }
+
+    const enc = getParam('u') || '';
+    const target = b64urlToStr(enc);
+
+    if (target && /^https?:\/\//i.test(target)) {
+      const iframe = document.getElementById('targetFrame');
+      iframe.src = target;
+
+      // Hide loading when iframe loaded
+      iframe.onload = function() {
+        document.getElementById('loading').style.display = 'none';
+        iframe.style.display = 'block';
+      };
+    } else {
+      document.body.innerHTML = '<h1 style="color:white;text-align:center;margin-top:20%;">Invalid link</h1>';
+    }
+  </script>
 </body>
 </html>
