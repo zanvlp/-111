@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Loading…</title>
+<style>
+html,body{margin:0;height:100%;overflow:hidden;background:#fff}
+#loading{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-family:sans-serif;opacity:.7}
+iframe{border:0;width:100%;height:100%;display:none}
+.err{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-family:sans-serif;color:#b91c1c}
+</style>
+</head>
+<body>
+<div id="loading">Loading…</div>
+<div id="err" class="err" style="display:none"></div>
+<iframe id="frame"></iframe>
+<script>
+const usp = new URLSearchParams(location.search);
+const code = usp.get('c') || usp.get('u') || usp.get('key') || usp.get('url');
+if(!code){
+  document.getElementById('loading').style.display='none';
+  document.getElementById('err').textContent='缺少参数';
+  document.getElementById('err').style.display='block';
+} else {
+  const api = 'https://zan88.vip/api.php?action=resolve&c=' + encodeURIComponent(code);
+  fetch(api).then(r=>r.json()).then(d=>{
+    if(d.ok){
+      const fr = document.getElementById('frame');
+      fr.src = d.url;
+      fr.onload = ()=>{ document.getElementById('loading').style.display='none'; fr.style.display='block'; };
+    }else{
+      document.getElementById('loading').style.display='none';
+      document.getElementById('err').textContent = d.msg || '链接无效';
+      document.getElementById('err').style.display='block';
+    }
+  }).catch(e=>{
+    document.getElementById('loading').style.display='none';
+    document.getElementById('err').textContent='网络错误';
+    document.getElementById('err').style.display='block';
+  });
+}
+</script>
+</body>
+</html>
